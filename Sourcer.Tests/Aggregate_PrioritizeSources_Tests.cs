@@ -1,8 +1,6 @@
-﻿using System.Buffers;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Reflection.Metadata;
-using System.Text;
 using System.Text.Json;
 using AutoFixture;
 using AutoFixture.Xunit2;
@@ -23,7 +21,7 @@ public class Aggregate_PrioritizeSources_Tests
 
         agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
         agg.ApplySource(new SourceCommand("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
-        string prioritized = agg.Prioritize("{\"Name\":\"Source1\",\"Value\":\"Source2\"}");
+        string prioritized = agg.Prioritize("{\"default\":{\"Name\":\"Source1\",\"Value\":\"Source2\"}}");
 
         prioritized.Should().Be("{\"Name\":\"Name1\",\"Value\":2}");
     }
@@ -35,7 +33,7 @@ public class Aggregate_PrioritizeSources_Tests
 
         agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
         agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":\"Name2\",\"Value\":2}"));
-        string prioritized = agg.Prioritize("{\"Name\":\"Source1\",\"Value\":\"Source2\"}");
+        string prioritized = agg.Prioritize("{\"default\":{\"Name\":\"Source1\",\"Value\":\"Source2\"}}");
 
         prioritized.Should().Be("{\"Name\":\"Name2\",\"Value\":2}");
     }
@@ -47,7 +45,7 @@ public class Aggregate_PrioritizeSources_Tests
 
         agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
         agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":null,\"Value\":null}"));
-        string prioritized = agg.Prioritize("{\"Name\":\"Source1\",\"Value\":\"Source2\"}");
+        string prioritized = agg.Prioritize("{\"default\":{\"Name\":\"Source1\",\"Value\":\"Source2\"}}");
 
         prioritized.Should().Be("{\"Name\":null,\"Value\":null}");
     }
@@ -59,7 +57,7 @@ public class Aggregate_PrioritizeSources_Tests
 
         agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
         agg.ApplySource(new SourceCommand("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
-        string prioritized = agg.Prioritize("{}");
+        string prioritized = agg.Prioritize("{\"default\":{}}");
 
 
         prioritized.Should().Be("{\"Name\":\"Name2\",\"Value\":2}");
@@ -72,7 +70,7 @@ public class Aggregate_PrioritizeSources_Tests
 
         agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
         agg.ApplySource(new SourceCommand("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
-        string prioritized = agg.Prioritize("{\"Name\":\"Source1\"}");
+        string prioritized = agg.Prioritize("{\"default\":{\"Name\":\"Source1\"}}");
 
 
         prioritized.Should().Be("{\"Name\":\"Name1\",\"Value\":2}");
@@ -99,7 +97,7 @@ public class Aggregate_PrioritizeSources_Tests
             agg.ApplySource(cmd.Item1);
         }
 
-        string prioritized = agg.Prioritize("{\"Name\":\"Source1\",\"Value\":\"Source2\"}");
+        string prioritized = agg.Prioritize("{\"default\":{\"Name\":\"Source1\",\"Value\":\"Source2\"}}");
 
 
         var lastSource2 = cmds.Last().Data;
@@ -132,7 +130,7 @@ public class Aggregate_PrioritizeSources_Tests
             agg.ApplySource(cmd.Item1);
         }
 
-        string prioritized = agg.Prioritize("{\"Name\":\"Source1\",\"Value\":\"Source2\"}");
+        string prioritized = agg.Prioritize("{\"default\":{\"Name\":\"Source1\",\"Value\":\"Source2\"}}");
 
 
         var lastSource2 = cmds.Last().Data;
@@ -144,86 +142,5 @@ public class Aggregate_PrioritizeSources_Tests
     public Aggregate_PrioritizeSources_Tests(ITestOutputHelper helper)
     {
         this.helper = helper;
-    }
-}
-
-public class Aggregate
-{
-    private List<SourceData> data = new();
-    private string id = string.Empty;
-
-    private record SourceData(string Source, string Data);
-
-    public void ApplySource(SourceCommand cmd)
-    {
-        id = cmd.EntityId;
-        data.Add(new SourceData(cmd.Source, cmd.SourceData));
-    }
-
-    public string Prioritize(string priortization)
-    {
-        var outputBuffer = new ArrayBufferWriter<byte>();
-
-        var objectEnumerator = JsonDocument.Parse(priortization).RootElement
-
-            .EnumerateObject();
-
-        Dictionary<string, Dictionary<string, string>> prio = objectEnumerator
-               .ToDictionary(j => j.Name,
-                   j => j.Value
-                       .EnumerateObject()
-                       .ToDictionary(j => j.Name, j => j.Value.ToString()));
-
-        Parse(outputBuffer, prio);
-
-        return Encoding.UTF8.GetString(outputBuffer.WrittenSpan);
-    }
-
-
-    private void Parse(ArrayBufferWriter<byte> outputBuffer, Dictionary<string, Dictionary<string, string>> prioTotal)
-    {
-        var prio = prioTotal.TryGetValue(id, out var idPrio) ? idPrio : prioTotal["default"];
-
-        Dictionary<string, (string Source, JsonProperty Property)> prioritizedObject = new();
-
-        var sourceAndDocuments = data
-            .Select(sourceData => (sourceData.Source, Document: JsonDocument.Parse(sourceData.Data)))
-            .ToArray();
-
-        foreach (var sourceAndDocument in sourceAndDocuments)
-        {
-
-            foreach (var newProp in sourceAndDocument.Document.RootElement.EnumerateObject())
-            {
-                if (prioritizedObject.TryGetValue(newProp.Name, out var current) &&
-                    prio.TryGetValue(newProp.Name, out var prioSource) &&
-                    prioSource.Equals(current.Source, StringComparison.InvariantCultureIgnoreCase) &&
-                    !current.Source.Equals(sourceAndDocument.Source, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    continue;
-                }
-
-
-                prioritizedObject[newProp.Name] = (sourceAndDocument.Source, newProp);
-            }
-        }
-
-        using var jsonWriter = new Utf8JsonWriter(outputBuffer, new JsonWriterOptions { Indented = false });
-
-
-        jsonWriter.WriteStartObject();
-
-        foreach (var sourceAndProperty in prioritizedObject.Values)
-        {
-            sourceAndProperty.Property.WriteTo(jsonWriter);
-        }
-
-        jsonWriter.WriteEndObject();
-
-        foreach (var sourceAndDocument in sourceAndDocuments)
-        {
-            sourceAndDocument.Document.Dispose();
-        }
-
     }
 }
