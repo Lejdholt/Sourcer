@@ -50,8 +50,8 @@ public class Aggregate_PrioritizeSources_Tests
         prioritized.Should().Be("{\"Name\":null,\"Value\":null}");
     }
 
-    [Fact(DisplayName = "Given data when prioritize is missing sources in data threat all sources equal")]
-    public void NoSourceThreadedEqually()
+    [Fact(DisplayName = "Given data when prioritize is missing sources in data treat all sources equal")]
+    public void NoSourceTreatedEqually()
     {
         var agg = new Aggregate();
 
@@ -63,8 +63,8 @@ public class Aggregate_PrioritizeSources_Tests
         prioritized.Should().Be("{\"Name\":\"Name2\",\"Value\":2}");
     }
 
-    [Fact(DisplayName = "Given data when prioritize is missing a prioritization for property in data threat all sources equal for that property")]
-    public void MissingSourceThreadedEqually()
+    [Fact(DisplayName = "Given data when prioritize is missing a prioritization for property in data treat all sources equal for that property")]
+    public void MissingSourceTreatedEqually()
     {
         var agg = new Aggregate();
 

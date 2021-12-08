@@ -19,17 +19,21 @@ public class Aggregate
 
     public string Prioritize(string priortization)
     {
+        Dictionary<string, Dictionary<string, string>> Dictionary()
+        {
+            using var document = JsonDocument.Parse(priortization);
+            var dictionary = document.RootElement.EnumerateObject()
+                .ToDictionary(j => j.Name,
+                    j => j.Value
+                        .EnumerateObject()
+                        .ToDictionary(p => p.Name, p => p.Value.ToString()));
+
+            return dictionary;
+        }
+
         var outputBuffer = new ArrayBufferWriter<byte>();
 
-        var objectEnumerator = JsonDocument.Parse(priortization).RootElement
-
-            .EnumerateObject();
-
-        var prio = objectEnumerator
-            .ToDictionary(j => j.Name,
-                j => j.Value
-                    .EnumerateObject()
-                    .ToDictionary(j => j.Name, j => j.Value.ToString()));
+        var prio = Dictionary();
 
         var @default = prio["default"];
         if (prio.TryGetValue(id, out var idPrio))
@@ -54,30 +58,29 @@ public class Aggregate
             .Select(sourceData => (sourceData.Source, Document: JsonDocument.Parse(sourceData.Data)))
             .ToArray();
 
-        foreach (var sourceAndDocument in sourceAndDocuments)
+        foreach (var (source, document) in sourceAndDocuments)
         {
-            foreach (var newProp in sourceAndDocument.Document.RootElement.EnumerateObject())
+            foreach (var newProp in document.RootElement.EnumerateObject())
             {
                 if (prioritizedObject.TryGetValue(newProp.Name, out var current) &&
                     prio.TryGetValue(newProp.Name, out var prioSource) &&
                     prioSource.Equals(current.Source, StringComparison.InvariantCultureIgnoreCase) &&
-                    !current.Source.Equals(sourceAndDocument.Source, StringComparison.InvariantCultureIgnoreCase))
+                    !current.Source.Equals(source, StringComparison.InvariantCultureIgnoreCase))
                 {
                     continue;
                 }
 
-                prioritizedObject[newProp.Name] = (sourceAndDocument.Source, newProp);
+                prioritizedObject[newProp.Name] = (Source: source, newProp);
             }
         }
 
         using var jsonWriter = new Utf8JsonWriter(outputBuffer, new JsonWriterOptions { Indented = false });
 
-
         jsonWriter.WriteStartObject();
 
-        foreach (var sourceAndProperty in prioritizedObject.Values)
+        foreach (var (_, property) in prioritizedObject.Values)
         {
-            sourceAndProperty.Property.WriteTo(jsonWriter);
+            property.WriteTo(jsonWriter);
         }
 
         jsonWriter.WriteEndObject();
@@ -86,6 +89,5 @@ public class Aggregate
         {
             sourceAndDocument.Document.Dispose();
         }
-
     }
 }
