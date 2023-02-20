@@ -16,8 +16,8 @@ public class Aggregate_PrioritizeSourcesOtherEntity_Tests
 
         string prioritized = agg.Prioritize(new()
         {
-            { new("default"), new() { { "Name", new("Source1") }, { "Value", new("Source1") }, } },
-            { new("id2"), new() { { "Name", new("Source2") }, { "Value", new("Source2") }, } }
+            { new("default"), new() { { "Name", new("source1") }, { "Value", new("source1") }, } },
+            { new("id2"), new() { { "Name", new("source2") }, { "Value", new("source2") }, } }
         });
         
         prioritized.Should().Be("{\"Name\":\"Name1\",\"Value\":1}");

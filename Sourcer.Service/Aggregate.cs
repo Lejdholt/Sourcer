@@ -34,6 +34,7 @@ public class Aggregate
     public string Prioritize(PrioritizationCollection prioritization)
     {
         EntityPrioritization @default = prioritization[new("default")];
+
         if (prioritization.TryGetValue(new(id), out var entityPrioritization))
         {
             foreach (var pair in entityPrioritization)
@@ -88,14 +89,10 @@ public class Aggregate
 
         foreach (var (key, obj) in document)
         {
-            if (prioritizedObject.TryGetValue(key, out var current) &&
-                prio.TryGetValue(key, out var prioSource))
+            if (prioritizedObject.TryGetValue(key, out var current) && current.Source != source && 
+                prio.TryGetValue(key, out var prioSource) && current.Source == prioSource )
             {
-                var (currentSource, _) = current;
-                if (prioSource == currentSource && currentSource == source)
-                {
-                    continue;
-                }
+              continue;
             }
 
             prioritizedObject[key] = (Source: source, obj);
@@ -105,6 +102,7 @@ public class Aggregate
         {
             return;
         }
+        document.Clear();
 
         Passe(prio, prioritizedObject, rest[0], rest.Skip(1).ToArray());
     }

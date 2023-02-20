@@ -1,6 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
-using System.Reflection.Metadata;
 using System.Text.Json;
 using AutoFixture;
 using AutoFixture.Xunit2;
@@ -26,7 +24,7 @@ public class Aggregate_PrioritizeSources_Tests
 
         string prioritized = agg.Prioritize(new()
         {
-            { new("default"), new() { { "Name", new("Source1") }, { "Value", new("Source2") }, } }
+            { new("default"), new() { { "Name", new("source1") }, { "Value", new("source2") }, } }
         });
 
         prioritized.Should().Be("{\"Name\":\"Name1\",\"Value\":2}");
@@ -42,7 +40,7 @@ public class Aggregate_PrioritizeSources_Tests
 
         string prioritized = agg.Prioritize(new()
         {
-            { new("default"), new() { { "Name", new("Source1") }, { "Value", new("Source2") }, } }
+            { new("default"), new() { { "Name", new("source1") }, { "Value", new("source2") }, } }
         });
         prioritized.Should().Be("{\"Name\":\"Name2\",\"Value\":2}");
     }
@@ -89,7 +87,7 @@ public class Aggregate_PrioritizeSources_Tests
        
         string prioritized = agg.Prioritize(new()
         {
-            { new("default"), new() { { "Name", new("Source1") } } }
+            { new("default"), new() { { "Name", new("source1") } } }
         });
 
         prioritized.Should().Be("{\"Name\":\"Name1\",\"Value\":2}");
@@ -119,7 +117,7 @@ public class Aggregate_PrioritizeSources_Tests
         
         string prioritized = agg.Prioritize(new()
         {
-            { new("default"), new() { { "Name", new("Source1") }, { "Value", new("Source2") }, } }
+            { new("default"), new() { { "Name", new("source1") }, { "Value", new("source2") }, } }
         });
         
         var lastSource2 = cmds.Last().Data;
@@ -155,7 +153,7 @@ public class Aggregate_PrioritizeSources_Tests
 
         string prioritized = agg.Prioritize(new()
         {
-            { new("default"), new() { { "Name", new("Source1") }, { "Value", new("Source2") }, } }
+            { new("default"), new() { { "Name", new("source1") }, { "Value", new("source2") }, } }
         });
         
         var lastSource2 = cmds.Last().Data;
