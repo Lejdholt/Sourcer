@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Sourcer.Service;
 using Xunit;
 
 namespace Sourcer.Tests;
@@ -13,7 +14,7 @@ public class Aggregate_ArrayTests
         agg.ApplySource(new SourceCommand("id1", "source1", "{\"Names\":[\"Name1\"]}"));
         agg.ApplySource(new SourceCommand("id1", "source1", "{\"Names\":[\"Name1\",\"Name2\"]}"));
 
-        var result = agg.Prioritize("{\"default\":{}}");
+        var result = agg.Prioritize(new(){ {new Identifier("default"),new EntityPrioritization()}});
 
         result.Should().Be("{\"Names\":[\"Name1\",\"Name2\"]}");
     } 
@@ -26,8 +27,7 @@ public class Aggregate_ArrayTests
         agg.ApplySource(new SourceCommand("id1", "source1", "{\"Names\":[\"Name1\",\"Name2\"]}"));
         agg.ApplySource(new SourceCommand("id1", "source1", "{\"Names\":[\"Name1\"]}"));
       
-
-        var result = agg.Prioritize("{\"default\":{}}");
+        var result = agg.Prioritize(new(){ {new Identifier("default"),new EntityPrioritization()}});
 
         result.Should().Be("{\"Names\":[\"Name1\"]}");
     }
