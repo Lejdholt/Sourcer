@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using System.Collections.Immutable;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -18,17 +19,17 @@ public sealed class PrioritizationCollection : Dictionary<Identifier, EntityPrio
 {
 }
 
-public class Aggregate
+public class Engine
 {
-    private List<SourceData> data = new();
+    private ImmutableArray<SourceData> data = new();
     private string id = string.Empty;
 
     private record SourceData(Source Source, string Data);
 
-    public void ApplySource(SourceCommand cmd)
+    public void ApplySource(SourceEvent cmd)
     {
         id = cmd.EntityId;
-        data.Add(new SourceData(new(cmd.Source), cmd.SourceData));
+        data = data.Add(new SourceData(new(cmd.Source), cmd.SourceData));
     }
 
     public string Prioritize(PrioritizationCollection prioritization)
@@ -46,7 +47,7 @@ public class Aggregate
         var prioritizedObject = Prioritize(@default);
 
         var outputBuffer = new ArrayBufferWriter<byte>();
-        
+
         using (var jsonWriter = new Utf8JsonWriter(outputBuffer, new JsonWriterOptions { Indented = false }))
         {
             jsonWriter.WriteStartObject();
@@ -74,25 +75,26 @@ public class Aggregate
     {
         Dictionary<string, (Source Source, JsonNode? Value)> prioritizedObject = new();
 
-        Passe(entityPrioritization, prioritizedObject, data[0], data.Skip(1).ToArray());
+
+        Prioritize(entityPrioritization, prioritizedObject, data[0], data[1..]);
 
         return prioritizedObject;
     }
 
-    private void Passe(EntityPrioritization prio,
+    private void Prioritize(EntityPrioritization prio,
         Dictionary<string, (Source Source, JsonNode? Value)> prioritizedObject,
         SourceData sourceData,
-        SourceData[] rest)
+        ImmutableArray< SourceData> rest)
     {
         var document = (JsonObject)JsonNode.Parse(sourceData.Data)!;
         var source = sourceData.Source;
 
         foreach (var (key, obj) in document)
         {
-            if (prioritizedObject.TryGetValue(key, out var current) && current.Source != source && 
-                prio.TryGetValue(key, out var prioSource) && current.Source == prioSource )
+            if (prioritizedObject.TryGetValue(key, out var current) && current.Source != source &&
+                prio.TryGetValue(key, out var prioSource) && current.Source == prioSource)
             {
-              continue;
+                continue;
             }
 
             prioritizedObject[key] = (Source: source, obj);
@@ -104,6 +106,6 @@ public class Aggregate
         }
         document.Clear();
 
-        Passe(prio, prioritizedObject, rest[0], rest.Skip(1).ToArray());
+        Prioritize(prio, prioritizedObject, rest[0], data[1..]);
     }
 }

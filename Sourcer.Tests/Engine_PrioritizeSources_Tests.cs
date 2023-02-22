@@ -9,20 +9,19 @@ using Xunit.Abstractions;
 
 namespace Sourcer.Tests;
 
-public class Aggregate_PrioritizeSources_Tests
+public class Engine_PrioritizeSources_Tests
 {
     private readonly ITestOutputHelper helper;
+    private Engine engine;
 
     [Fact(DisplayName =
         "Given data from different sources when prioritize then merge according to prioritization source")]
     public void MergeAccordingToPrioritization()
     {
-        var agg = new Aggregate();
+        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
+        engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
 
-        agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
-        agg.ApplySource(new SourceCommand("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
-
-        string prioritized = agg.Prioritize(new()
+        string prioritized = engine.Prioritize(new()
         {
             { new("default"), new() { { "Name", new("source1") }, { "Value", new("source2") }, } }
         });
@@ -33,12 +32,10 @@ public class Aggregate_PrioritizeSources_Tests
     [Fact(DisplayName = "Given data from the same source when prioritize then merge in lifo order")]
     public void MergeSameSource()
     {
-        var agg = new Aggregate();
+        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
+        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name2\",\"Value\":2}"));
 
-        agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
-        agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":\"Name2\",\"Value\":2}"));
-
-        string prioritized = agg.Prioritize(new()
+        string prioritized = engine.Prioritize(new()
         {
             { new("default"), new() { { "Name", new("source1") }, { "Value", new("source2") }, } }
         });
@@ -48,12 +45,10 @@ public class Aggregate_PrioritizeSources_Tests
     [Fact(DisplayName = "Given data from the same source when prioritize then overwrite null")]
     public void MergeNullShouldOverwrite()
     {
-        var agg = new Aggregate();
+        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
+        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":null,\"Value\":null}"));
 
-        agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
-        agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":null,\"Value\":null}"));
-
-        string prioritized = agg.Prioritize(new()
+        string prioritized = engine.Prioritize(new()
         {
             { new("default"), new() { { "Name", new("Source1") }, { "Value", new("Source2") }, } }
         });
@@ -64,11 +59,9 @@ public class Aggregate_PrioritizeSources_Tests
     [Fact(DisplayName = "Given data when prioritize is missing sources in data treat all sources equal")]
     public void NoSourceTreatedEqually()
     {
-        var agg = new Aggregate();
-
-        agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
-        agg.ApplySource(new SourceCommand("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
-        string prioritized = agg.Prioritize(new()
+        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
+        engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
+        string prioritized = engine.Prioritize(new()
         {
             { new("default"), new() }
         });
@@ -80,12 +73,10 @@ public class Aggregate_PrioritizeSources_Tests
         "Given data when prioritize is missing a prioritization for property in data treat all sources equal for that property")]
     public void MissingSourceTreatedEqually()
     {
-        var agg = new Aggregate();
-
-        agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
-        agg.ApplySource(new SourceCommand("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
+        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
+        engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
        
-        string prioritized = agg.Prioritize(new()
+        string prioritized = engine.Prioritize(new()
         {
             { new("default"), new() { { "Name", new("source1") } } }
         });
@@ -102,26 +93,24 @@ public class Aggregate_PrioritizeSources_Tests
 
         bool IsNextToLast(int index) => index != numberOfDataVersion - 1;
 
-        var cmds = fixture.CreateMany<TestData>(numberOfDataVersion)
+        var data = fixture.CreateMany<TestData>(numberOfDataVersion)
             .Select((d, i) =>
-                (Command: new SourceCommand("id1", IsNextToLast(i) ? "source1" : "source2", JsonSerializer.Serialize(d)),
+                (Event: new SourceEvent("id1", IsNextToLast(i) ? "source1" : "source2", JsonSerializer.Serialize(d)),
                     Data: d))
             .ToArray();
 
-
-        var agg = new Aggregate();
-        foreach (var cmd in cmds)
+        foreach (var d in data)
         {
-            agg.ApplySource(cmd.Item1);
+            engine.ApplySource(d.Event);
         }
         
-        string prioritized = agg.Prioritize(new()
+        string prioritized = engine.Prioritize(new()
         {
             { new("default"), new() { { "Name", new("source1") }, { "Value", new("source2") }, } }
         });
         
-        var lastSource2 = cmds.Last().Data;
-        var nextLastSource1 = cmds.SkipLast(1).Last().Data;
+        var lastSource2 = data.Last().Data;
+        var nextLastSource1 = data.SkipLast(1).Last().Data;
 
         prioritized.Should().Be($"{{\"Name\":\"{nextLastSource1.Name}\",\"Value\":\"{lastSource2.Value}\"}}");
     }
@@ -134,36 +123,36 @@ public class Aggregate_PrioritizeSources_Tests
     {
         var fixture = new Fixture();
         var middle = (int)(numberOfDataVersion / 2);
+
         bool IsTheMiddle(int index) => index == middle;
 
-        var cmds = fixture.CreateMany<TestData>(numberOfDataVersion)
+        (SourceEvent Event, TestData Data)[]? data = fixture.CreateMany<TestData>(numberOfDataVersion)
             .Select((d, i) =>
-                (Command: new SourceCommand("id1",
+                (Command: new SourceEvent("id1",
                         IsTheMiddle(i) ? "source1" : "source2",
                         JsonSerializer.Serialize(d)),
                     Data: d))
             .ToArray();
 
-
-        var agg = new Aggregate();
-        foreach (var cmd in cmds)
+        foreach (var d in data)
         {
-            agg.ApplySource(cmd.Item1);
+            engine.ApplySource(d.Event);
         }
 
-        string prioritized = agg.Prioritize(new()
+        string prioritized = engine.Prioritize(new()
         {
             { new("default"), new() { { "Name", new("source1") }, { "Value", new("source2") }, } }
         });
         
-        var lastSource2 = cmds.Last().Data;
-        var source1 = cmds.First(c => c.Command.Source == "source1").Data;
+        var lastSource2 = data.Last().Data;
+        var source1 = data.First(c => c.Event.Source == "source1").Data;
 
         prioritized.Should().Be($"{{\"Name\":\"{source1.Name}\",\"Value\":\"{lastSource2.Value}\"}}");
     }
 
-    public Aggregate_PrioritizeSources_Tests(ITestOutputHelper helper)
+    public Engine_PrioritizeSources_Tests(ITestOutputHelper helper)
     {
         this.helper = helper;
+        engine         = new Engine();
     }
 }

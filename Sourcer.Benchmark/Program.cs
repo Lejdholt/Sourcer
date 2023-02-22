@@ -14,20 +14,20 @@ public class Md5VsSha256
     [Benchmark]
     public void Sha256()
     {
-        var agg = new Aggregate();
+        var agg = new Engine();
 
-        agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
-        agg.ApplySource(new SourceCommand("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
-        agg.ApplySource(new SourceCommand("id1", "source3", "{\"Name\":\"Name3\",\"Value\":2}"));
-        agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":\"Name1\",\"Value\":2}"));
-        agg.ApplySource(new SourceCommand("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
-        agg.ApplySource(new SourceCommand("id1", "source3", "{\"Name\":\"Name3\",\"Value\":2}"));
-        agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":\"Name1\",\"Value\":2}"));
-        agg.ApplySource(new SourceCommand("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
-        agg.ApplySource(new SourceCommand("id1", "source3", "{\"Name\":\"Name3\",\"Value\":2}"));
-        agg.ApplySource(new SourceCommand("id1", "source1", "{\"Name\":\"Name1\",\"Value\":2}"));
-        agg.ApplySource(new SourceCommand("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
-        agg.ApplySource(new SourceCommand("id1", "source3", "{\"Name\":\"Name3\",\"Value\":2}"));
+        agg.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
+        agg.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
+        agg.ApplySource(new SourceEvent("id1", "source3", "{\"Name\":\"Name3\",\"Value\":2}"));
+        agg.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":2}"));
+        agg.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
+        agg.ApplySource(new SourceEvent("id1", "source3", "{\"Name\":\"Name3\",\"Value\":2}"));
+        agg.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":2}"));
+        agg.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
+        agg.ApplySource(new SourceEvent("id1", "source3", "{\"Name\":\"Name3\",\"Value\":2}"));
+        agg.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":2}"));
+        agg.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
+        agg.ApplySource(new SourceEvent("id1", "source3", "{\"Name\":\"Name3\",\"Value\":2}"));
         agg.Prioritize(new()
             {
                 { new("default"), new() { { "Name", new("Source1") }, { "Value", new("Source2") },} },
