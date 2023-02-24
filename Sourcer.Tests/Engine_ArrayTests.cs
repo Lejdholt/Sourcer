@@ -17,7 +17,7 @@ public class Engine_ArrayTests
     public void NewLargerArray()
     {
         engine.ApplySource(new SourceEvent("id1", "source1", "{\"Names\":[\"Name1\"]}"));
-        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Names\":[\"Name1\",\"Name2\"]}"));
+        engine.ApplySource(new SourceEvent("id1", "source2", "{\"Names\":[\"Name1\",\"Name2\"]}"));
 
         var result = engine.Prioritize(new(){ {new Identifier("default"),new EntityPrioritization()}});
 
@@ -28,7 +28,7 @@ public class Engine_ArrayTests
     public void NewSmallerArray()
     {
         engine.ApplySource(new SourceEvent("id1", "source1", "{\"Names\":[\"Name1\",\"Name2\"]}"));
-        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Names\":[\"Name1\"]}"));
+        engine.ApplySource(new SourceEvent("id1", "source2", "{\"Names\":[\"Name1\"]}"));
       
         var result = engine.Prioritize(new(){ {new Identifier("default"),new EntityPrioritization()}});
 

@@ -24,6 +24,7 @@ public sealed class PrioritizationCollection : Dictionary<Identifier, EntityPrio
 public class Engine
 {
     private ImmutableArray<SourceData> data = ImmutableArray.Create<SourceData>();
+    private ImmutableHashSet<Source> sources = ImmutableHashSet.Create<Source>();
     private string? id = null;
 
     private record SourceData(Source Source, string Data);
@@ -39,8 +40,15 @@ public class Engine
         {
             throw new IdentifiersNotSameException($"Incoming id {cmd.EntityId} must be same as first given id {id}");
         }
-        
-        data = data.Add(new SourceData(new(cmd.Source), cmd.SourceData));
+
+        var source = new Source(cmd.Source);
+
+        if (sources.Contains(source))
+        {
+            throw new SourceAlreadyPresentException($"Incoming source {cmd.Source} already has source data associated with it");
+        }
+        sources = sources.Add(source);
+        data    = data.Add(new SourceData(source, cmd.SourceData));
     }
 
     public string Prioritize(PrioritizationCollection prioritization)
@@ -125,6 +133,13 @@ public class Engine
 public class IdentifiersNotSameException : SourcerException
 {
     public IdentifiersNotSameException(string message) : base(message)
+    {
+    }
+}
+[Serializable]
+public class SourceAlreadyPresentException : SourcerException
+{
+    public SourceAlreadyPresentException(string message) : base(message)
     {
     }
 }
