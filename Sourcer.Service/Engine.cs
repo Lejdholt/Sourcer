@@ -21,7 +21,7 @@ public sealed class PrioritizationCollection : Dictionary<Identifier, EntityPrio
 
 public class Engine
 {
-    private ImmutableArray<SourceData> data = new();
+    private ImmutableArray<SourceData> data = ImmutableArray.Create<SourceData>();
     private string id = string.Empty;
 
     private record SourceData(Source Source, string Data);
@@ -29,7 +29,7 @@ public class Engine
     public void ApplySource(SourceEvent cmd)
     {
         id = cmd.EntityId;
-        data = data.Add(new SourceData(new(cmd.Source), cmd.SourceData));
+      data =  data.Add(new SourceData(new(cmd.Source), cmd.SourceData));
     }
 
     public string Prioritize(PrioritizationCollection prioritization)
@@ -81,7 +81,7 @@ public class Engine
         return prioritizedObject;
     }
 
-    private void Prioritize(EntityPrioritization prio,
+    private static void Prioritize(EntityPrioritization prio,
         Dictionary<string, (Source Source, JsonNode? Value)> prioritizedObject,
         SourceData sourceData,
         ImmutableArray< SourceData> rest)
@@ -106,6 +106,6 @@ public class Engine
         }
         document.Clear();
 
-        Prioritize(prio, prioritizedObject, rest[0], data[1..]);
+        Prioritize(prio, prioritizedObject, rest[0], rest[1..]);
     }
 }
