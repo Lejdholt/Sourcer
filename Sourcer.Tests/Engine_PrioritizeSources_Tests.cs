@@ -12,7 +12,13 @@ namespace Sourcer.Tests;
 public class Engine_PrioritizeSources_Tests
 {
     private readonly ITestOutputHelper helper;
-    private Engine engine;
+    private readonly Engine engine;
+
+    public Engine_PrioritizeSources_Tests(ITestOutputHelper helper)
+    {
+        this.helper = helper;
+        engine      = new Engine();
+    }
 
     [Fact(DisplayName =
         "Given data from different sources when prioritize then merge according to prioritization source")]
@@ -21,9 +27,16 @@ public class Engine_PrioritizeSources_Tests
         engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
         engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
 
-        string prioritized = engine.Prioritize(new()
+        var prioritized = engine.Prioritize(new PrioritizationCollection
         {
-            { new("default"), new() { { "Name", new("source1") }, { "Value", new("source2") }, } }
+            {
+                new Identifier("default"),
+                new EntityPrioritization
+                {
+                    { "Name", new ("source1") },
+                    { "Value", new ("source2") }
+                }
+            }
         });
 
         prioritized.Should().Be("{\"Name\":\"Name1\",\"Value\":2}");
@@ -35,9 +48,9 @@ public class Engine_PrioritizeSources_Tests
         engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
         engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name2\",\"Value\":2}"));
 
-        string prioritized = engine.Prioritize(new()
+        var prioritized = engine.Prioritize(new PrioritizationCollection
         {
-            { new("default"), new() { { "Name", new("source1") }, { "Value", new("source2") }, } }
+            { new Identifier("default"), new EntityPrioritization { { "Name", new Source("source1") }, { "Value", new Source("source2") } } }
         });
         prioritized.Should().Be("{\"Name\":\"Name2\",\"Value\":2}");
     }
@@ -48,9 +61,9 @@ public class Engine_PrioritizeSources_Tests
         engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
         engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":null,\"Value\":null}"));
 
-        string prioritized = engine.Prioritize(new()
+        var prioritized = engine.Prioritize(new PrioritizationCollection
         {
-            { new("default"), new() { { "Name", new("Source1") }, { "Value", new("Source2") }, } }
+            { new Identifier("default"), new EntityPrioritization { { "Name", new Source("Source1") }, { "Value", new Source("Source2") } } }
         });
 
         prioritized.Should().Be("{\"Name\":null,\"Value\":null}");
@@ -61,9 +74,9 @@ public class Engine_PrioritizeSources_Tests
     {
         engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
         engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
-        string prioritized = engine.Prioritize(new()
+        var prioritized = engine.Prioritize(new PrioritizationCollection
         {
-            { new("default"), new() }
+            { new Identifier("default"), new EntityPrioritization() }
         });
 
         prioritized.Should().Be("{\"Name\":\"Name2\",\"Value\":2}");
@@ -75,10 +88,10 @@ public class Engine_PrioritizeSources_Tests
     {
         engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
         engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
-       
-        string prioritized = engine.Prioritize(new()
+
+        var prioritized = engine.Prioritize(new PrioritizationCollection
         {
-            { new("default"), new() { { "Name", new("source1") } } }
+            { new Identifier("default"), new EntityPrioritization { { "Name", new Source("source1") } } }
         });
 
         prioritized.Should().Be("{\"Name\":\"Name1\",\"Value\":2}");
@@ -91,7 +104,10 @@ public class Engine_PrioritizeSources_Tests
     {
         var fixture = new Fixture();
 
-        bool IsNextToLast(int index) => index != numberOfDataVersion - 1;
+        bool IsNextToLast(int index)
+        {
+            return index != numberOfDataVersion - 1;
+        }
 
         var data = fixture.CreateMany<TestData>(numberOfDataVersion)
             .Select((d, i) =>
@@ -103,13 +119,13 @@ public class Engine_PrioritizeSources_Tests
         {
             engine.ApplySource(d.Event);
         }
-        
-        string prioritized = engine.Prioritize(new()
+
+        var prioritized = engine.Prioritize(new PrioritizationCollection
         {
-            { new("default"), new() { { "Name", new("source1") }, { "Value", new("source2") }, } }
+            { new Identifier("default"), new EntityPrioritization { { "Name", new Source("source1") }, { "Value", new Source("source2") } } }
         });
-        
-        var lastSource2 = data.Last().Data;
+
+        var lastSource2     = data.Last().Data;
         var nextLastSource1 = data.SkipLast(1).Last().Data;
 
         prioritized.Should().Be($"{{\"Name\":\"{nextLastSource1.Name}\",\"Value\":\"{lastSource2.Value}\"}}");
@@ -122,9 +138,12 @@ public class Engine_PrioritizeSources_Tests
     public void GivenAlotOfDataPrioSourceInTheMiddle([Range(10, 30)] int numberOfDataVersion)
     {
         var fixture = new Fixture();
-        var middle = (int)(numberOfDataVersion / 2);
+        var middle  = numberOfDataVersion / 2;
 
-        bool IsTheMiddle(int index) => index == middle;
+        bool IsTheMiddle(int index)
+        {
+            return index == middle;
+        }
 
         (SourceEvent Event, TestData Data)[]? data = fixture.CreateMany<TestData>(numberOfDataVersion)
             .Select((d, i) =>
@@ -139,20 +158,14 @@ public class Engine_PrioritizeSources_Tests
             engine.ApplySource(d.Event);
         }
 
-        string prioritized = engine.Prioritize(new()
+        var prioritized = engine.Prioritize(new PrioritizationCollection
         {
-            { new("default"), new() { { "Name", new("source1") }, { "Value", new("source2") }, } }
+            { new Identifier("default"), new EntityPrioritization { { "Name", new Source("source1") }, { "Value", new Source("source2") } } }
         });
-        
+
         var lastSource2 = data.Last().Data;
-        var source1 = data.First(c => c.Event.Source == "source1").Data;
+        var source1     = data.First(c => c.Event.Source == "source1").Data;
 
         prioritized.Should().Be($"{{\"Name\":\"{source1.Name}\",\"Value\":\"{lastSource2.Value}\"}}");
-    }
-
-    public Engine_PrioritizeSources_Tests(ITestOutputHelper helper)
-    {
-        this.helper = helper;
-        engine         = new Engine();
     }
 }

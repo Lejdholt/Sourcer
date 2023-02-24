@@ -1,5 +1,6 @@
 ﻿using System.Buffers;
 using System.Collections.Immutable;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -17,19 +18,29 @@ public sealed class EntityPrioritization : Dictionary<string, Source>
 
 public sealed class PrioritizationCollection : Dictionary<Identifier, EntityPrioritization>
 {
+ 
 }
 
 public class Engine
 {
     private ImmutableArray<SourceData> data = ImmutableArray.Create<SourceData>();
-    private string id = string.Empty;
+    private string? id = null;
 
     private record SourceData(Source Source, string Data);
 
     public void ApplySource(SourceEvent cmd)
     {
-        id = cmd.EntityId;
-      data =  data.Add(new SourceData(new(cmd.Source), cmd.SourceData));
+
+        if (id == null)
+        {
+            id = cmd.EntityId;
+        }
+        else  if (id != cmd.EntityId)
+        {
+            throw new IdentifiersNotSameException($"Incoming id {cmd.EntityId} must be same as first given id {id}");
+        }
+        
+        data = data.Add(new SourceData(new(cmd.Source), cmd.SourceData));
     }
 
     public string Prioritize(PrioritizationCollection prioritization)
@@ -107,5 +118,33 @@ public class Engine
         document.Clear();
 
         Prioritize(prio, prioritizedObject, rest[0], rest[1..]);
+    }
+}
+
+[Serializable]
+public class IdentifiersNotSameException : SourcerException
+{
+    public IdentifiersNotSameException(string message) : base(message)
+    {
+    }
+}
+
+[Serializable]
+public abstract class SourcerException:Exception
+{
+    protected SourcerException()
+    {
+    }
+
+    protected SourcerException(SerializationInfo info, StreamingContext context) : base(info, context)
+    {
+    }
+
+    protected SourcerException(string? message) : base(message)
+    {
+    }
+
+    protected SourcerException(string? message, Exception? innerException) : base(message, innerException)
+    {
     }
 }
