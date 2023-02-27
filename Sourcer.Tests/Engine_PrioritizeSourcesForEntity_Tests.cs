@@ -10,7 +10,9 @@ public class Engine_PrioritizeSourcesForEntity_Tests
     private readonly ITestOutputHelper helper;
     private readonly Engine engine;
 
-    [Fact(DisplayName = "Given data from different sources when prioritize with prioritization for entity then merge according to prioritization source for entity")]
+    [Fact(DisplayName = @"Given data from different sources 
+when prioritize with prioritization for entity 
+then merge according to prioritization source for entity")]
     public void MergeAccordingToPrioritizationForEntity()
     {
         engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
@@ -40,7 +42,9 @@ public class Engine_PrioritizeSourcesForEntity_Tests
         prioritized.Should().Be("{\"Name\":\"Name1\",\"Value\":2}");
     } 
     
-    [Fact(DisplayName = "Given data from different sources when prioritize with prioritization for entity but prop is missing from prioritization and default then merge according to prioritization source for entity with missing prop as lifo prio")]
+    [Fact(DisplayName = @"Given data from different sources 
+when prioritize with prioritization for entity but prop is missing from prioritization and default 
+then merge according to prioritization source for entity with missing prop as fifo")]
     public void MergeAccordingToPrioritizationForEntityUseFallback1()
     {
         engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
@@ -52,7 +56,7 @@ public class Engine_PrioritizeSourcesForEntity_Tests
             { new("id1"), new() { { "Value", new("Source2") }, } }
         });
         
-        prioritized.Should().Be("{\"Name\":\"Name2\",\"Value\":2}");
+        prioritized.Should().Be("{\"Name\":\"Name1\",\"Value\":2}");
     }
 
     

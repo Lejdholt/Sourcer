@@ -52,15 +52,16 @@ public class Engine_PrioritizeSources_Tests
             { new Identifier("default"), new PropertySpecificPrioritization() }
         });
 
-        prioritized.Should().Be("{\"Name\":\"Name2\",\"Value\":2}");
+        prioritized.Should().Be("{\"Name\":\"Name1\",\"Value\":1}");
     }
 
     [Fact(DisplayName =
-        "Given data when prioritize is missing a prioritization for property in data treat all sources equal for that property")]
+        "Given data when prioritize is missing a prioritization for property in data then treat all sources equal for that property")]
     public void MissingSourceTreatedEqually()
     {
-        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
         engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
+        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
+     
 
         var prioritized = engine.Prioritize(new PrioritizationCollection
         {

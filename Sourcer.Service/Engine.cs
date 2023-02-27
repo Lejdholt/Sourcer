@@ -1,50 +1,15 @@
 ﻿using System.Buffers;
 using System.Collections.Immutable;
-using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
+using Sourcer.Service.Exceptions;
 
 namespace Sourcer.Service;
 
-public record Source(string Value);
-
-public record Identifier(string Value);
-
-public sealed class PropertySpecificPrioritization : Dictionary<string, Source>
-{
-}
-
-
-public record IdentifierPrioritization(IEnumerable<SourcePrioritization> SourcePrioritization, PropertySpecificPrioritization SpecificPrioritization);
-
-public class SourcePrioritization
-{
-    public SourcePrioritization(string source)
-    {
-        Source = source;
-    }
-
-    public string Source { get; }
-}
-
-
-public sealed class PrioritizationCollection : Dictionary<Identifier, IdentifierPrioritization>
-{
-    public void Add(Identifier identifier,  SourcePrioritization[] sourcePrioritization, PropertySpecificPrioritization propertySpecificPrioritization = null)
-    {
-        this.Add(identifier, new IdentifierPrioritization(sourcePrioritization, propertySpecificPrioritization));
-    } 
-    
-    public void Add(Identifier identifier, PropertySpecificPrioritization propertySpecificPrioritization)
-    {
-        this.Add(identifier,new SourcePrioritization[0], propertySpecificPrioritization);
-    }
-}
-
 public class Engine
 {
+
     private ImmutableArray<SourceData> data = ImmutableArray.Create<SourceData>();
     private ImmutableHashSet<Source> sources = ImmutableHashSet.Create<Source>();
     private string? id = null;
@@ -58,7 +23,7 @@ public class Engine
         {
             id = cmd.EntityId;
         }
-        else  if (id != cmd.EntityId)
+        else if (id != cmd.EntityId)
         {
             throw new IdentifiersNotSameException($"Incoming id {cmd.EntityId} must be same as first given id {id}");
         }
@@ -69,16 +34,32 @@ public class Engine
         {
             throw new SourceAlreadyPresentException($"Incoming source {cmd.Source} already has source data associated with it");
         }
-        sources = sources.Add(source);
-        data    = data.Add(new SourceData(source, cmd.SourceData));
+
+        data = data.Add(new SourceData(source, cmd.SourceData));
     }
 
     public string Prioritize(PrioritizationCollection prioritization)
     {
-        PropertySpecificPrioritization propertySpecificPrioritization = prioritization[new("default")].SpecificPrioritization;
+
+
+        PropertySpecificPrioritization propertySpecificPrioritization = new PropertySpecificPrioritization();
+        var sourcePrioritization = Array.Empty<SourcePrioritization>();
+
+        if (prioritization.TryGetValue(new(new("default")), out var defaultEntityPrioritization))
+        {
+            propertySpecificPrioritization = defaultEntityPrioritization.SpecificPrioritization;
+            sourcePrioritization = defaultEntityPrioritization.SourcePrioritization.ToArray();
+        }
+
+        ReorderSourcesToPrio(sourcePrioritization);
+
 
         if (prioritization.TryGetValue(new(id), out var entityPrioritization))
         {
+
+            ReorderSourcesToPrio(entityPrioritization.SourcePrioritization.ToArray());
+
+
             foreach (var pair in entityPrioritization.SpecificPrioritization)
             {
                 propertySpecificPrioritization[pair.Key] = pair.Value;
@@ -111,77 +92,76 @@ public class Engine
         return Encoding.UTF8.GetString(outputBuffer.WrittenSpan);
     }
 
+    private void ReorderSourcesToPrio(SourcePrioritization[] sourcePrioritization)
+    {
+        if (sourcePrioritization.Length == 0)   
+        {
+            return;
+        }
+
+        var prioSources = ImmutableArray.Create<SourceData>();
+        foreach (var VARIABLE in sourcePrioritization)
+        {
+            var s = data.FirstOrDefault(s => s.Source == VARIABLE.Source);
+
+            if (s != null)
+            {
+                prioSources = prioSources.Add(s);
+                data        = data.Remove(s);
+            }
+        }
+
+        foreach (var sourceData in data)
+        {
+            prioSources = prioSources.Add(sourceData);
+        }
+
+        data = prioSources;
+    }
+
 
     private Dictionary<string, (Source Source, JsonNode? Value)> Prioritize(PropertySpecificPrioritization propertySpecificPrioritization)
     {
         Dictionary<string, (Source Source, JsonNode? Value)> prioritizedObject = new();
-
 
         Prioritize(propertySpecificPrioritization, prioritizedObject, data[0], data[1..]);
 
         return prioritizedObject;
     }
 
-    private static void Prioritize(PropertySpecificPrioritization prio,
+    private void Prioritize(PropertySpecificPrioritization prio,
         Dictionary<string, (Source Source, JsonNode? Value)> prioritizedObject,
         SourceData sourceData,
-        ImmutableArray< SourceData> rest)
+        ImmutableArray<SourceData> rest)
     {
         var document = (JsonObject)JsonNode.Parse(sourceData.Data)!;
         var source = sourceData.Source;
 
         foreach (var (key, obj) in document)
         {
-            if (prioritizedObject.TryGetValue(key, out var current) && current.Source != source &&
-                prio.TryGetValue(key, out var prioSource) && current.Source == prioSource)
+            if (prioritizedObject.TryGetValue(key, out var current))
             {
-                continue;
+
+                if (!prio.TryGetValue(key, out var prioSource))
+                {
+                    continue;
+                }
+
+                if (current.Source == prioSource && current.Source != source)
+                {
+                    continue;
+                }
             }
 
             prioritizedObject[key] = (Source: source, obj);
         }
 
+        document.Clear();
         if (rest.Length is 0)
         {
             return;
         }
-        document.Clear();
-
+        
         Prioritize(prio, prioritizedObject, rest[0], rest[1..]);
-    }
-}
-
-[Serializable]
-public class IdentifiersNotSameException : SourcerException
-{
-    public IdentifiersNotSameException(string message) : base(message)
-    {
-    }
-}
-[Serializable]
-public class SourceAlreadyPresentException : SourcerException
-{
-    public SourceAlreadyPresentException(string message) : base(message)
-    {
-    }
-}
-
-[Serializable]
-public abstract class SourcerException:Exception
-{
-    protected SourcerException()
-    {
-    }
-
-    protected SourcerException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
-
-    protected SourcerException(string? message) : base(message)
-    {
-    }
-
-    protected SourcerException(string? message, Exception? innerException) : base(message, innerException)
-    {
     }
 }
