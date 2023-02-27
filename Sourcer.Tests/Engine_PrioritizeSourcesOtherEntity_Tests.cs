@@ -16,8 +16,8 @@ public class Engine_PrioritizeSourcesOtherEntity_Tests
     [Fact(DisplayName = "Given data from different sources when prioritize with prioritization for another entity do not use prioritization for another entity")]
     public void DoNotYouPrioritizationForOtherEntity()
     {
-        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
-        engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
+        engine.ApplySource(new ("id1"), new ( new ("source1"), "{\"Name\":\"Name1\",\"Value\":1}"));
+        engine.ApplySource(new ("id1"), new ( new ("source2"), "{\"Name\":\"Name2\",\"Value\":2}"));
 
         string prioritized = engine.Prioritize(new()
         {

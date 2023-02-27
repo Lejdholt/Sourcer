@@ -15,8 +15,8 @@ when prioritize with prioritization for entity
 then merge according to prioritization source for entity")]
     public void MergeAccordingToPrioritizationForEntity()
     {
-        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
-        engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
+        engine.ApplySource(new ("id1"), new ( new ("source1"), "{\"Name\":\"Name1\",\"Value\":1}"));
+        engine.ApplySource(new ("id1"), new ( new ("source2"), "{\"Name\":\"Name2\",\"Value\":2}"));
 
         string prioritized = engine.Prioritize(new()
         {
@@ -30,8 +30,8 @@ then merge according to prioritization source for entity")]
     [Fact(DisplayName = "Given data from different sources when prioritize with prioritization for entity but prop is missing then merge according to prioritization source for entity with fallback to default")]
     public void MergeAccordingToPrioritizationForEntityUseFallback()
     {
-        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
-        engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
+        engine.ApplySource(new ("id1"), new ( new ( "source1"), "{\"Name\":\"Name1\",\"Value\":1}"));
+        engine.ApplySource(new ("id1"), new ( new ( "source2"), "{\"Name\":\"Name2\",\"Value\":2}"));
         
         string prioritized = engine.Prioritize(new()
         {
@@ -47,8 +47,8 @@ when prioritize with prioritization for entity but prop is missing from prioriti
 then merge according to prioritization source for entity with missing prop as fifo")]
     public void MergeAccordingToPrioritizationForEntityUseFallback1()
     {
-        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
-        engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
+        engine.ApplySource(new ("id1"), new (new ("source1"), "{\"Name\":\"Name1\",\"Value\":1}"));
+        engine.ApplySource(new ("id1"), new (new ("source2"), "{\"Name\":\"Name2\",\"Value\":2}"));
         
         string prioritized = engine.Prioritize(new()
         {

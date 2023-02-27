@@ -23,8 +23,8 @@ public class Engine_PrioritizeEntiyWideSources_Tests
           then merge according to default prioritization source")]
     public void MergeAccordingToDefaultSourcePrioritization()
     {
-        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
-        engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
+        engine.ApplySource(new ("id1"),new (new ( "source1"), "{\"Name\":\"Name1\",\"Value\":1}"));
+        engine.ApplySource(new ("id1"),new (new ( "source2"), "{\"Name\":\"Name2\",\"Value\":2}"));
 
         var prioritized = engine.Prioritize(new PrioritizationCollection
         {
@@ -32,8 +32,8 @@ public class Engine_PrioritizeEntiyWideSources_Tests
                 new Identifier("default"),
                 new[]
                 {
-                    new SourcePrioritization("source1"),
-                    new SourcePrioritization("source2")
+                    new Source("source1"),
+                    new Source("source2")
                 }
             }
         });
@@ -49,8 +49,8 @@ public class Engine_PrioritizeEntiyWideSources_Tests
           then merge according to objects prioritization source")]
     public void MergeAccordingToObjectPrioritization()
     {
-        engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
-        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
+        engine.ApplySource(new ("id1"),new (new ( "source2"), "{\"Name\":\"Name2\",\"Value\":2}"));
+        engine.ApplySource(new ("id1"),new (new ( "source1"), "{\"Name\":\"Name1\",\"Value\":1}"));
        
         var prioritized = engine.Prioritize(new PrioritizationCollection
         {
@@ -58,16 +58,16 @@ public class Engine_PrioritizeEntiyWideSources_Tests
                 new Identifier("default"),
                 new[]
                 {
-                    new SourcePrioritization("source1"),
-                    new SourcePrioritization("source2")
+                    new Source("source1"),
+                    new Source("source2")
                 }
             },
             {
                 new Identifier("id1"),
                 new []
                 {
-                    new SourcePrioritization("source2"),
-                    new SourcePrioritization("source1"),
+                    new Source("source2"),
+                    new Source("source1"),
                 }
             }
         });
@@ -85,8 +85,8 @@ public class Engine_PrioritizeEntiyWideSources_Tests
           then merge according to objects prioritization source")]
     public void MergeAccordingToObjectPrioritizationFirst()
     {
-        engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
-        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
+        engine.ApplySource(new("id1"), new(new("source2"), "{\"Name\":\"Name2\",\"Value\":2}"));
+        engine.ApplySource(new("id1"), new(new("source1"), "{\"Name\":\"Name1\",\"Value\":1}"));
        
         var prioritized = engine.Prioritize(new PrioritizationCollection
         {
@@ -94,7 +94,7 @@ public class Engine_PrioritizeEntiyWideSources_Tests
                 new Identifier("default"),
                 new[]
                 {
-                    new SourcePrioritization("source1")
+                    new Source("source1")
          
                 }
             },
@@ -102,7 +102,7 @@ public class Engine_PrioritizeEntiyWideSources_Tests
                 new Identifier("id1"),
                 new []
                 {
-                    new SourcePrioritization("source2")
+                    new Source("source2")
                 }
             }
         });
@@ -120,17 +120,17 @@ public class Engine_PrioritizeEntiyWideSources_Tests
           then merge according to default source property prioritization source")]
     public void MergeAccordingToDefaultSourcePropertyPrioritization()
     {
-        engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
-        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
+        engine.ApplySource(new ("id1"),new (new ( "source2"), "{\"Name\":\"Name2\",\"Value\":2}"));
+        engine.ApplySource(new ("id1"),new (new ( "source1"), "{\"Name\":\"Name1\",\"Value\":1}"));
        
         var prioritized = engine.Prioritize(new PrioritizationCollection
         {
             {
                 new Identifier("default"),
                 new[]
-                {
-                    new SourcePrioritization("source1"),
-                    new SourcePrioritization("source2")
+                {   
+                    new Source("source1"),
+                    new Source("source2")
                 },
                 new PropertySpecificPrioritization()
                 {
@@ -141,8 +141,8 @@ public class Engine_PrioritizeEntiyWideSources_Tests
                 new Identifier("id1"),
                 new []
                 {
-                    new SourcePrioritization("source2"),
-                    new SourcePrioritization("source1"),
+                    new Source("source2"),
+                    new Source("source1"),
                 }
             },
           
@@ -161,8 +161,8 @@ public class Engine_PrioritizeEntiyWideSources_Tests
           then merge according to object source property prioritization source")]
     public void MergeAccordingToObjectSourcePropertyPrioritizationSource()
     {
-        engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
-        engine.ApplySource(new SourceEvent("id1", "source1", "{\"Name\":\"Name1\",\"Value\":1}"));
+        engine.ApplySource(new("id1"), new(new("source2"), "{\"Name\":\"Name2\",\"Value\":2}"));
+        engine.ApplySource(new("id1"), new(new("source1"), "{\"Name\":\"Name1\",\"Value\":1}"));
        
         var prioritized = engine.Prioritize(new PrioritizationCollection
         {
@@ -170,8 +170,8 @@ public class Engine_PrioritizeEntiyWideSources_Tests
                 new Identifier("default"),
                 new[]
                 {
-                    new SourcePrioritization("source1"),
-                    new SourcePrioritization("source2")
+                    new Source("source1"),
+                    new Source("source2")
                 },
                 new PropertySpecificPrioritization()
                 {
@@ -182,8 +182,8 @@ public class Engine_PrioritizeEntiyWideSources_Tests
                 new Identifier("id1"),
                 new []
                 {
-                    new SourcePrioritization("source2"),
-                    new SourcePrioritization("source1"),
+                    new Source("source2"),
+                    new Source("source1"),
                 },
                 new PropertySpecificPrioritization()
                 {
