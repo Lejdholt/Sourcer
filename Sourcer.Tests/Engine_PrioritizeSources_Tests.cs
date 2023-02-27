@@ -31,7 +31,7 @@ public class Engine_PrioritizeSources_Tests
         {
             {
                 new Identifier("default"),
-                new EntityPrioritization
+                new PropertySpecificPrioritization
                 {
                     { "Name", new ("source1") },
                     { "Value", new ("source2") }
@@ -49,7 +49,7 @@ public class Engine_PrioritizeSources_Tests
         engine.ApplySource(new SourceEvent("id1", "source2", "{\"Name\":\"Name2\",\"Value\":2}"));
         var prioritized = engine.Prioritize(new PrioritizationCollection
         {
-            { new Identifier("default"), new EntityPrioritization() }
+            { new Identifier("default"), new PropertySpecificPrioritization() }
         });
 
         prioritized.Should().Be("{\"Name\":\"Name2\",\"Value\":2}");
@@ -64,7 +64,7 @@ public class Engine_PrioritizeSources_Tests
 
         var prioritized = engine.Prioritize(new PrioritizationCollection
         {
-            { new Identifier("default"), new EntityPrioritization { { "Name", new Source("source1") } } }
+            { new Identifier("default"), new PropertySpecificPrioritization { { "Name", new Source("source1") } } }
         });
 
         prioritized.Should().Be("{\"Name\":\"Name1\",\"Value\":2}");

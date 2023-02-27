@@ -18,7 +18,7 @@ public class Engine_PrioritizeSourcesForEntity_Tests
 
         string prioritized = engine.Prioritize(new()
         {
-            { new("default"), new() { { "Name", new("Source1") }, { "Value", new("Source2") }, } },
+            { new("default"), new() { { "Name", new ("Source1") }, { "Value", new("Source2") }, } },
             { new("id1"), new() { { "Name", new("Source2") }, { "Value", new("Source2") }, } }
         });
 

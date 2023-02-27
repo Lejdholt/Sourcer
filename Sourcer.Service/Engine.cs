@@ -12,13 +12,35 @@ public record Source(string Value);
 
 public record Identifier(string Value);
 
-public sealed class EntityPrioritization : Dictionary<string, Source>
+public sealed class PropertySpecificPrioritization : Dictionary<string, Source>
 {
 }
 
-public sealed class PrioritizationCollection : Dictionary<Identifier, EntityPrioritization>
+
+public record IdentifierPrioritization(IEnumerable<SourcePrioritization> SourcePrioritization, PropertySpecificPrioritization SpecificPrioritization);
+
+public class SourcePrioritization
 {
- 
+    public SourcePrioritization(string source)
+    {
+        Source = source;
+    }
+
+    public string Source { get; }
+}
+
+
+public sealed class PrioritizationCollection : Dictionary<Identifier, IdentifierPrioritization>
+{
+    public void Add(Identifier identifier,  SourcePrioritization[] sourcePrioritization, PropertySpecificPrioritization propertySpecificPrioritization = null)
+    {
+        this.Add(identifier, new IdentifierPrioritization(sourcePrioritization, propertySpecificPrioritization));
+    } 
+    
+    public void Add(Identifier identifier, PropertySpecificPrioritization propertySpecificPrioritization)
+    {
+        this.Add(identifier,new SourcePrioritization[0], propertySpecificPrioritization);
+    }
 }
 
 public class Engine
@@ -53,17 +75,17 @@ public class Engine
 
     public string Prioritize(PrioritizationCollection prioritization)
     {
-        EntityPrioritization @default = prioritization[new("default")];
+        PropertySpecificPrioritization propertySpecificPrioritization = prioritization[new("default")].SpecificPrioritization;
 
         if (prioritization.TryGetValue(new(id), out var entityPrioritization))
         {
-            foreach (var pair in entityPrioritization)
+            foreach (var pair in entityPrioritization.SpecificPrioritization)
             {
-                @default[pair.Key] = pair.Value;
+                propertySpecificPrioritization[pair.Key] = pair.Value;
             }
         }
 
-        var prioritizedObject = Prioritize(@default);
+        var prioritizedObject = Prioritize(propertySpecificPrioritization);
 
         var outputBuffer = new ArrayBufferWriter<byte>();
 
@@ -90,17 +112,17 @@ public class Engine
     }
 
 
-    private Dictionary<string, (Source Source, JsonNode? Value)> Prioritize(EntityPrioritization entityPrioritization)
+    private Dictionary<string, (Source Source, JsonNode? Value)> Prioritize(PropertySpecificPrioritization propertySpecificPrioritization)
     {
         Dictionary<string, (Source Source, JsonNode? Value)> prioritizedObject = new();
 
 
-        Prioritize(entityPrioritization, prioritizedObject, data[0], data[1..]);
+        Prioritize(propertySpecificPrioritization, prioritizedObject, data[0], data[1..]);
 
         return prioritizedObject;
     }
 
-    private static void Prioritize(EntityPrioritization prio,
+    private static void Prioritize(PropertySpecificPrioritization prio,
         Dictionary<string, (Source Source, JsonNode? Value)> prioritizedObject,
         SourceData sourceData,
         ImmutableArray< SourceData> rest)
