@@ -1,4 +1,4 @@
-﻿namespace Sourcer.Service.Exceptions;
+﻿namespace Sourcer.Exceptions;
 
 [Serializable]
 public class IdentifiersNotSameException : SourcerException

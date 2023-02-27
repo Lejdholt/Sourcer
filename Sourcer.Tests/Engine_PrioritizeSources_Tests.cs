@@ -3,7 +3,7 @@ using System.Text.Json;
 using AutoFixture;
 using AutoFixture.Xunit2;
 using FluentAssertions;
-using Sourcer.Service;
+using Sourcer;
 using Xunit;
 using Xunit.Abstractions;
 

@@ -3,9 +3,9 @@ using System.Collections.Immutable;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Sourcer.Service.Exceptions;
+using Sourcer.Exceptions;
 
-namespace Sourcer.Service;
+namespace Sourcer;
 
 public class Engine
 {

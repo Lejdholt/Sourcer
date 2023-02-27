@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace Sourcer.Service.Exceptions;
+namespace Sourcer.Exceptions;
 
 [Serializable]
 public abstract class SourcerException : Exception

@@ -1,5 +1,5 @@
 ﻿using FluentAssertions;
-using Sourcer.Service;
+using Sourcer;
 using Xunit;
 
 namespace Sourcer.Tests;

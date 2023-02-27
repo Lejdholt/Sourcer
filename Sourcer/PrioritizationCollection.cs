@@ -1,4 +1,4 @@
-﻿namespace Sourcer.Service;
+﻿namespace Sourcer;
 
 public sealed class PrioritizationCollection : Dictionary<Identifier, Prioritization>
 {
