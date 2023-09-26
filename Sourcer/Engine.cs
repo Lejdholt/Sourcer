@@ -37,19 +37,19 @@ public class Engine
     public string Prioritize(PrioritizationCollection prioritization)
     {
         var propertySpecificPrioritization = new PropertySpecificPrioritization();
-        var sourcePrioritization           = Array.Empty<Source>();
+        var sourcePrioritization = new Sources();
 
-        if (prioritization.TryGetValue(new Identifier(new string("default")), out var defaultEntityPrioritization))
+        if (prioritization.TryGetValue(new Identifier("default"), out var defaultEntityPrioritization))
         {
             propertySpecificPrioritization = defaultEntityPrioritization.SpecificPrioritization;
-            sourcePrioritization           = defaultEntityPrioritization.SourcePrioritization;
+            sourcePrioritization = defaultEntityPrioritization.SourcePrioritization;
         }
 
-        ReorderSourcesToPrioritization(sourcePrioritization);
+        ReorderSourcesToPrioritization(sourcePrioritization.ToArray());
 
         if (prioritization.TryGetValue(id!, out var entityPrioritization))
         {
-            ReorderSourcesToPrioritization(entityPrioritization.SourcePrioritization);
+            ReorderSourcesToPrioritization(entityPrioritization.SourcePrioritization.ToArray());
 
             foreach (var pair in entityPrioritization.SpecificPrioritization)
             {
@@ -81,7 +81,7 @@ public class Engine
             }
 
             prioSources = prioSources.Add(sourceData);
-            data        = data.Remove(sourceData);
+            data = data.Remove(sourceData);
         }
 
         foreach (var sourceData in data)
@@ -107,7 +107,7 @@ public class Engine
         ImmutableArray<SourceData> rest)
     {
         var document = (JsonObject)JsonNode.Parse(sourceData.Data)!;
-        var source   = sourceData.Source;
+        var source = sourceData.Source;
 
         foreach (var (key, obj) in document)
         {
@@ -128,7 +128,7 @@ public class Engine
         }
 
         document.Clear();
-      
+
         if (rest.Length is 0)
         {
             return;
